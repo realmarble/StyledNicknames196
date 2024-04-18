@@ -31,7 +31,11 @@ import static net.minecraft.server.command.CommandManager.literal;
 
 public class Commands {
     public static final boolean VANISH = FabricLoader.getInstance().isModLoaded("melius-vanish");
-
+    public static String removeTags(String inputString) {
+        String pattern = "</?\\*[^>]*>";
+        // Replace matched patterns with an empty string
+        return inputString.replaceAll(pattern, "");
+    }
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
@@ -92,6 +96,12 @@ public class Commands {
         NicknameHolder holder = NicknameHolder.of(context.getSource().getPlayerOrThrow());
         var config = ConfigManager.getConfig();
         var nickname = context.getArgument("nickname", String.class);
+        var originalnick = context.getSource().getPlayerOrThrow().getName().getString(); // get original username
+        if (!Objects.equals(originalnick, removeTags(nickname))){
+        //original nick isn't consistent with the text submitted, reject change
+            context.getSource().getPlayer().sendMessage(Text.literal("Nickname Invalid, Display name has to be the same as username.").formatted(Formatting.RED));
+            return 0;
+        }
         if (config.configData.maxLength > 0) {
             Map<String, TextParserV1.TagNodeBuilder> handlers = new HashMap<>();
             for (var entry : TextParserV1.SAFE.getTags()) {
@@ -124,7 +134,7 @@ public class Commands {
             }
         }
 
-        holder.styledNicknames$set(nickname, true);
+        holder.styledNicknames$set(nickname, true); //assuming this changes the nickname
         context.getSource().sendFeedback(() ->
                         Placeholders.parseText(ConfigManager.getConfig().changeText, Placeholders.PREDEFINED_PLACEHOLDER_PATTERN, holder.styledNicknames$placeholdersCommand()),
                 false);
