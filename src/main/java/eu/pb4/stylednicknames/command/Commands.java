@@ -32,7 +32,7 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class Commands {
     public static final boolean VANISH = FabricLoader.getInstance().isModLoaded("melius-vanish");
     public static String removeTags(String inputString) {
-        String pattern = "</?\\*[^>]*>";
+        String pattern = "<[^>]*>";
         // Replace matched patterns with an empty string
         return inputString.replaceAll(pattern, "");
     }
