@@ -1,6 +1,7 @@
 package eu.pb4.stylednicknames.command;
 
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -102,6 +103,11 @@ public class Commands {
             context.getSource().getPlayer().sendMessage(Text.literal("Nickname Invalid, Display name has to be the same as username.").formatted(Formatting.RED));
             return 0;
         }
+        if (!validateTags(nickname)){
+            context.getSource().getPlayer().sendMessage(Text.literal("Nickname Invalid, Forbidden Tags.").formatted(Formatting.RED));
+            return 0; //if tags are not on the allowed list, return 0 to indicate forbidden tags.
+        }
+
         if (config.configData.maxLength > 0) {
             Map<String, TextParserV1.TagNodeBuilder> handlers = new HashMap<>();
             for (var entry : TextParserV1.SAFE.getTags()) {
@@ -248,5 +254,21 @@ public class Commands {
                 .collect(Collectors.toSet());
         return CommandSource.suggestMatching(nicknames, builder);
     };
+
+    private static boolean validateTags(String nickname) {
+        // Regex pattern to detect <tag> and </tag> structures
+        Pattern tagPattern = Pattern.compile("</?([a-zA-Z0-9]+)>");
+        Matcher matcher = tagPattern.matcher(nickname);
+
+        while (matcher.find()) {
+            String tag = matcher.group(1);  // Extract the tag name
+            // Check if the tag is allowed using config map
+            if (!ConfigManager.getConfig().defaultFormattingCodes.containsKey(tag)) {
+                return false;  // If the tag is not in the config, return 0
+            }
+        }
+
+        return true;  // All tags are valid
+    }
 
 }
